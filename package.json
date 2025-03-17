@@ -1,11 +1,15 @@
 {
   "name": "belling",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "description": "a fast declarative JavaScript library",
   "license": "MIT",
   "scripts": {
     "build": "tsc && esbuild src/index.ts --bundle --outfile=dist/index.js --minify --sourcemap --platform=browser --target=es6 --format=esm"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chaos-cupcake/belling-js"
   }
 }
