@@ -1,12 +1,14 @@
 # belling js
 
-中文版在下方
-
 Efficient, Concise, and Out-of-the-Box Frontend Framework
 
 The size of `index.js` is only 9.5 KB.
 
 Near-native performance with built-in immutable data structures.
+
+demo: [tic-tac-toe](https://codesandbox.io/p/sandbox/cjp53l)
+
+中文版在下方
 
 ## Signal  
 
@@ -96,7 +98,8 @@ l2.forEach(() => {
 - Immutable arrays use tree structures:  
   - O(logN) for insertion/deletion/lookup.
   - O(N) for traversal.
-- Outperforms native JS arrays in large-scale updates and surpasses immer.js/immutable.js.
+- For large arrays, the library's immutable arrays outperform native JavaScript Arrays in modification performance.
+- This implementation demonstrates significantly better performance than immer.js and immutable.js in most scenarios.
 
 ## JSX/TSX  
 
