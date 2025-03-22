@@ -134,8 +134,8 @@ const f = new Set<() => void>();
 let req = false;
 
 function update() {
-  l.forEach((n) => n.v);
   f.forEach((n) => n());
+  l.forEach((n) => n.v);
   l.clear();
   f.clear();
   req = false;
@@ -166,7 +166,7 @@ export class root {
     this._whenDestroy.push(f);
   }
   _destroy() {
-    this.#stateList.forEach((s) => this.#watcher.unwatch(s));
+    this.#watcher.unwatch();
     this._whenDestroy.forEach((f) => f());
   }
 }
@@ -288,7 +288,7 @@ class ForEachNode<T> extends ele {
     });
     w.watch(list);
     r._addDestroyCallback(() => {
-      w.unwatch(list);
+      w.unwatch();
       this.#roots.forEach((r) => r._destroy());
     });
     update();
@@ -330,7 +330,7 @@ class node extends ele {
   render(r: root) {
     r._addDestroyCallback(() => {
       this._root?._destroy();
-      this._watcher.unwatch(this._node);
+      this._watcher.unwatch();
     });
     return this.dom as Element;
   }

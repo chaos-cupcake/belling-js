@@ -2,7 +2,7 @@
 
 Efficient, Concise, and Out-of-the-Box Frontend Framework
 
-The size of `index.js` is only 9.5 KB.
+The size of `index.js` is only 9.6 KB.
 
 Near-native performance with built-in immutable data structures.
 
@@ -111,7 +111,7 @@ demo: [tic-tac-toe](https://codesandbox.io/p/sandbox/cjp53l)
 
 高效，简洁，开箱即用的前端框架。
 
-index.js大小仅为9.5kb。
+index.js大小仅为9.6kb。
 
 性能接近原生，内置不可变数据结构。
 

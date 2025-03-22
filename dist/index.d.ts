@@ -30,8 +30,12 @@ export type Signal<T extends Any> = State<T> | Compute<T>;
 type signal = State<Any> | Compute<Any>;
 export declare class Watcher {
     _Func?: (n: signal) => void;
-    watch(n: signal): void;
-    unwatch(n: signal): void;
+    watchList: Set<signal>;
+    watch(...s: signal[]): void;
+    /**
+      If no arguments are passed, it will stop watching all states.
+     */
+    unwatch(...s: signal[]): void;
     set callback(v: ((n: signal) => void) | undefined);
     get callback(): ((n: signal) => void) | undefined;
 }

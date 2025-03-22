@@ -40,8 +40,7 @@ export class State<T extends Any> {
     }
   }
 }
-// const alreadyConnect = 1,
-// visited = 2;
+
 function update(c: Compute<Any>) {
   if (!(c instanceof Compute) || !c._Dirty) return;
   const l = c._Producer;
@@ -114,26 +113,36 @@ function disconnect(n: signal) {
 }
 export class Watcher {
   _Func?: (n: signal) => void;
-  watch(n: signal) {
-    const w = n._Watchers;
-    if (!w) n._Watchers = this;
-    else if (w instanceof Array) {
-      if (w.indexOf(this) > -1) return;
-      w.push(this);
-    } else if (w != this) n._Watchers = [this, w];
-    if (n instanceof Compute) update(n);
-  }
-  unwatch(n: signal) {
-    const w = n._Watchers;
-    if (!w) return;
-    if (w instanceof Array) {
-      const i = w.indexOf(this);
-      if (i > -1) w.splice(i, 1);
-      if (w.length > 0) return;
-    } else {
-      n._Watchers = void 0;
+  watchList = new Set<signal>();
+  watch(...s: signal[]) {
+    for (const n of s) {
+      const w = n._Watchers;
+      if (!w) n._Watchers = this;
+      else if (w instanceof Array) {
+        if (w.indexOf(this) > -1) continue;
+        w.push(this);
+      } else if (w != this) n._Watchers = [this, w];
+      if (n instanceof Compute) update(n);
+      this.watchList.add(n);
     }
-    disconnect(n);
+  }
+  /**
+    If no arguments are passed, it will stop watching all states.
+   */
+  unwatch(...s: signal[]) {
+    for (const n of s.length > 0 ? s : this.watchList.values()) {
+      const w = n._Watchers;
+      if (!w) continue;
+      this.watchList.delete(n);
+      if (w instanceof Array) {
+        const i = w.indexOf(this);
+        if (i > -1) w.splice(i, 1);
+        if (w.length > 0) continue;
+      } else {
+        n._Watchers = void 0;
+      }
+      disconnect(n);
+    }
   }
   set callback(v) {
     this._Func = typeof v == "function" ? v : void 0;
@@ -142,7 +151,6 @@ export class Watcher {
     return this._Func;
   }
 }
-// state can only be watched by one watcher
 export function state<T extends Any>(v: T) {
   const s = new State<T>(v);
   return s;
