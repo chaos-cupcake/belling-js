@@ -291,6 +291,7 @@ class ForEachNode<T> extends ele {
       w.unwatch(list);
       this.#roots.forEach((r) => r._destroy());
     });
+    update();
     return el;
   }
 }

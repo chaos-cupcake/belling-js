@@ -107,6 +107,8 @@ No compilation is required for basic usage. For JSX/TSX syntax, implement Babel 
 
 ---
 
+demo: [tic-tac-toe](https://codesandbox.io/p/sandbox/cjp53l)
+
 高效，简洁，开箱即用的前端框架。
 
 index.js大小仅为9.5kb。
