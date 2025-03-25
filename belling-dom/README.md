@@ -1,10 +1,10 @@
 # belling.js
 
 ```typescript
-import { h, root } from "belling-dom";
+import { div, span, root } from "belling-dom";
 // Create DOM
-h("div", 
-  h("span", "width:"), 
+div(
+  span("width:"), 
   b, 
   () => a.v + "px"
 )
@@ -22,29 +22,33 @@ h("div",
 })
 .style({
   paddingLeft: b,
+}).ref((dom)=>{
+  // get dom node
 });
 // Render
-new root(document.getElementById("App"), h("div"));
+new root(document.getElementById("App"), div());
 ```
 
 ## Lists
 
 ```typescript
 const l = state(makeArr(0, 1, 2));
-ForEach("div", l, (v) => h("div", v.toString()));
-ForIn("div", l, (i, v) => h("div", () => i.v + ":", v.toString()));
+ForEach("div", l, (v) => div(v.toString()));
+ForIn("div", l, (i, v) => div(() => i.v + ":", v.toString()));
 ```
 
 - Performs diff updates when `l` changes, adding new elements and removing old ones.
 - Since keys or UUIDs are not required, each item in the array must be unique to enable fine-grained updates.
 
-## Dynamic Nodes  
+## Ele
+
+## Dynamic Nodes
 
 ```typescript
 const show = state(true as boolean);
 dynNode(() => {
-  if (show.v) return h("input");
-  else return h("div");
+  if (show.v) return input();
+  else return div();
 });
 ```
 
@@ -53,10 +57,10 @@ Achieves functionality similar to Vue's `v-if` and supports complex logic.
 ## 中文版
 
 ```typescript
-import { h，root } from "belling-dom"
+import { div, span，root } from "belling-dom"
 
 // 创建dom
-h("div", h("span", "width:"), b, () => a.v + "px")
+div(span("width:"), b, () => a.v + "px")
  /* 当b.v改变，视图会自动更新。若子节点传入函数，当函数内的状态改变时，也会更新视图 */
  .on({
   unmount() {
@@ -74,15 +78,15 @@ h("div", h("span", "width:"), b, () => a.v + "px")
  });
 
 // 渲染
-new root(document.getElementById("App"), h("div"));
+new root(document.getElementById("App"), div());
 ```
 
 ### 列表
 
 ```typescript
 const l = state(makeArr(0, 1, 2))
-ForEach("div", l, (v) => h("div", v.toString()));
-ForIn("div", l, (i, v) => h("div", () => i.v + ":", v.toString()));
+ForEach("div", l, (v) => div(, v.toString()));
+ForIn("div", l, (i, v) => div(() => i.v + ":", v.toString()));
 ```
 
 当'l'改变时列表会进行diff更新，diff更新会添加新增内容，销毁被移除的内容。
@@ -94,8 +98,8 @@ ForIn("div", l, (i, v) => h("div", () => i.v + ":", v.toString()));
 ```typescript
 const show = state(true as boolean);
 dynNode(() => {
-  if (show.v) return h("input");
-  else return h("div");
+  if (show.v) return input();
+  else return div();
 });
 ```
 

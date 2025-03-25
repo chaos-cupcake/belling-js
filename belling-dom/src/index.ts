@@ -225,8 +225,8 @@ const tmp1: number[] = [],
   tmp3: number[] = [];
 const tmp4: ChildNode[] = [];
 /**
- * 列表中的元素不能重复!
- * 推荐对象作为列表元素（signal[], object[]）
+ * Elements in the list cannot be duplicated!
+ * It is recommended to use objects as list elements (signal[], object[])
  */
 class ForEachNode<
   T,
@@ -384,13 +384,13 @@ export function ForIn<
   );
   return e;
 }
-document.createElement("br");
 export type ForEach<
   T,
   K extends keyof HTMLElementTagNameMap,
   L extends keyof HTMLElementTagNameMap
 > = ForEachNode<T, K, L>;
-// ！不要缓存并使用旧节点，当节点被移除时，会执行 destroy 回收节点！
+
+/** Do not cache and reuse old nodes; when a node is removed, destroy will be executed to recycle the node! */
 export function dynNode<T extends keyof HTMLElementTagNameMap>(
   ele: Signal<ele<T>> | (() => ele<T>)
 ) {
@@ -464,8 +464,8 @@ export function figcaption(...children: children) {
 export function figure(...children: children) {
   return new ele("figure", children);
 }
-export function hr(...children: children) {
-  return new ele("hr", children);
+export function hr() {
+  return new ele("hr");
 }
 export function li(...children: children) {
   return new ele("li", children);
@@ -500,8 +500,8 @@ export function bdi(...children: children) {
 export function bdo(...children: children) {
   return new ele("bdo", children);
 }
-export function br(...children: children) {
-  return new ele("br", children);
+export function br() {
+  return new ele("br");
 }
 export function cite(...children: children) {
   return new ele("cite", children);
@@ -569,29 +569,29 @@ export function u(...children: children) {
 export function Var(...children: children) {
   return new ele("var", children);
 }
-export function wbr(...children: children) {
-  return new ele("wbr", children);
+export function wbr() {
+  return new ele("wbr");
 }
-export function area(...children: children) {
-  return new ele("area", children);
+export function area() {
+  return new ele("area");
 }
 export function audio(...children: children) {
   return new ele("audio", children);
 }
-export function img(...children: children) {
-  return new ele("img", children);
+export function img() {
+  return new ele("img");
 }
 export function map(...children: children) {
   return new ele("map", children);
 }
-export function track(...children: children) {
-  return new ele("track", children);
+export function track() {
+  return new ele("track");
 }
 export function video(...children: children) {
   return new ele("video", children);
 }
-export function embed(...children: children) {
-  return new ele("embed", children);
+export function embed() {
+  return new ele("embed");
 }
 export function iframe(...children: children) {
   return new ele("iframe", children);
@@ -603,8 +603,8 @@ export function picture(...children: children) {
   return new ele("picture", children);
 }
 s;
-export function source(...children: children) {
-  return new ele("source", children);
+export function source() {
+  return new ele("source");
 }
 export function canvas(...children: children) {
   return new ele("canvas", children);
@@ -618,8 +618,8 @@ export function del(...children: children) {
 export function caption(...children: children) {
   return new ele("caption", children);
 }
-export function col(...children: children) {
-  return new ele("col", children);
+export function col() {
+  return new ele("col");
 }
 export function colgroup(...children: children) {
   return new ele("colgroup", children);
@@ -657,8 +657,8 @@ export function fieldset(...children: children) {
 export function form(...children: children) {
   return new ele("form", children);
 }
-export function input(...children: children) {
-  return new ele("input", children);
+export function input() {
+  return new ele("input");
 }
 export function label(...children: children) {
   return new ele("label", children);

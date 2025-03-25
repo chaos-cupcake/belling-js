@@ -1,6 +1,6 @@
 {
   "name": "belling-dom",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.2",
   "type": "module",
   "module": "dist/index.js",
   "types": "src/index.ts",
@@ -11,7 +11,7 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "belling": "^1.1.0-alpha.0"
+    "belling": "^1.1.1"
   },
   "repository": {
     "type": "git",

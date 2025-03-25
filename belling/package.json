@@ -1,9 +1,9 @@
 {
   "name": "belling",
-  "version": "1.1.0-alpha.1",
+  "version": "1.1.1",
   "type": "module",
   "module": "./dist/index.js",
-  "types": "./drc/index.ts",
+  "types": "./src/index.ts",
   "description": "a fast declarative JavaScript library",
   "license": "MIT",
   "scripts": {
