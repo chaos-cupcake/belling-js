@@ -1,0 +1,23 @@
+{
+  "name": "belling-dom",
+  "version": "1.0.0-alpha.2",
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "src/index.ts",
+  "description": "a fast declarative JavaScript library",
+  "license": "MIT",
+  "scripts": {
+    "build": "node esbuild.config.js",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "belling": "^1.1.0-alpha.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chaos-cupcake/belling-js.git"
+  },
+  "devDependencies": {
+    "esbuild-node-externals": "^1.18.0"
+  }
+}

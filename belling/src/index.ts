@@ -1,7 +1,6 @@
 import { array, makeArr, Stop } from "./array";
-import { root, h, ForEach, ForIn, dynNode, Ele } from "./dom";
-export { root, h, ForEach, ForIn, dynNode, makeArr, Stop };
-export type { array, Ele };
+export { makeArr, Stop };
+export type { array };
 
 let caller: Compute<Any> | undefined;
 function markAsDirty(n: signal) {

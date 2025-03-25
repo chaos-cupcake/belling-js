@@ -7,8 +7,8 @@ import {
   watcher,
   Signal,
   state,
-} from "./index";
-import { array } from "./array";
+  array,
+} from "belling";
 
 interface Kv<V> {
   [key: string]: V;
