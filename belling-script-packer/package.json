@@ -1,0 +1,18 @@
+{
+  "name": "belling-script-packer",
+  "version": "0.0.0-alpha.0",
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "src/index.ts",
+  "description": "a fast js/ts packer",
+  "license": "MIT",
+  "scripts": {
+    "build": "",
+    "prepare": "npm run build"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chaos-cupcake/belling-js.git"
+  }
+}
