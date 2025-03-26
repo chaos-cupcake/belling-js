@@ -3,7 +3,6 @@ import {
   State,
   Compute,
   Watcher,
-  Any,
   watcher,
   Signal,
   state,
@@ -133,7 +132,7 @@ class ele<T extends keyof HTMLElementTagNameMap> {
     return el;
   }
 }
-const l = new Set<Signal<Any>>();
+const l = new Set<Signal<any>>();
 const f = new Set<() => void>();
 let req = false;
 
@@ -144,7 +143,7 @@ function update() {
   f.clear();
   req = false;
 }
-function willUpdate(n: Signal<Any> | (() => void)) {
+function willUpdate(n: Signal<any> | (() => void)) {
   if (!req) {
     req = true;
     requestAnimationFrame(update);
@@ -155,14 +154,14 @@ function willUpdate(n: Signal<Any> | (() => void)) {
 export class root<T extends keyof HTMLElementTagNameMap> {
   dom: Element;
   #watcher = new Watcher();
-  #stateList: Signal<Any>[] = [];
+  #stateList: Signal<any>[] = [];
   _whenDestroy = [] as (() => void)[];
   constructor(parentDom: Element | undefined, n: ele<T>) {
     this.#watcher.callback = willUpdate;
     this.dom = n.render(this);
     parentDom?.appendChild(this.dom);
   }
-  _watch(s: Signal<Any>) {
+  _watch(s: Signal<any>) {
     this.#stateList.push(s);
     this.#watcher.watch(s);
   }
@@ -223,10 +222,9 @@ function increaseSeq(arr: number[], prev: number[], res: number[]) {
 const tmp1: number[] = [],
   tmp2: number[] = [],
   tmp3: number[] = [];
-const tmp4: ChildNode[] = [];
+const tmp5: ChildNode[] = [];
 /**
- * Elements in the list cannot be duplicated!
- * It is recommended to use objects as list elements (signal[], object[])
+ * When there are duplicate items in a list, the components rendered for those identical items cannot be reused during diff updates due to the inability to determine a stable mapping relationship.
  */
 class ForEachNode<
   T,
@@ -248,6 +246,7 @@ class ForEachNode<
       vi = this.#vIdx,
       mapFn = this.f,
       roots = this.#roots;
+    const repeatedItems: root<L>[] = [];
     function update(): void {
       const new2old = tmp1;
       new2old.length = 0;
@@ -261,9 +260,13 @@ class ForEachNode<
           new2old.push(-1);
         }
       });
-      tmp4.length = 0;
-      const oldDomList = tmp4;
+      const oldDomList = tmp5;
       el.childNodes.forEach((v) => oldDomList.push(v));
+      repeatedItems.forEach((r) => {
+        r._destroy();
+        el.removeChild(r.dom);
+      });
+      repeatedItems.length = 0;
       vi.forEach((i, v) => {
         if (i != -1) {
           (roots.get(v) as root<L>)._destroy();
@@ -279,17 +282,21 @@ class ForEachNode<
           next = res[j];
         if (old == -1) {
           const n = new root(void 0, mapFn(v));
-          roots.set(v, n);
           if (i == l.length - 1) el.appendChild(n.dom);
           else el.insertBefore(n.dom, oldDomList[next]);
-        } else if (old == next) j++;
-        else el.insertBefore(oldDomList[old], oldDomList[next]);
+          if (vi.has(v)) {
+            repeatedItems.push(n);
+            return;
+          }
+          roots.set(v, n);
+        } else if (old == next) {
+          j++;
+        } else {
+          el.insertBefore(oldDomList[old], oldDomList[next]);
+        }
         vi.set(v, i);
       });
-      tmp1.length = 0;
-      tmp2.length = 0;
-      tmp3.length = 0;
-      tmp4.length = 0;
+      tmp1.length = tmp2.length = tmp3.length = tmp5.length = 0;
     }
     const w = watcher(() => {
       willUpdate(update);
@@ -307,16 +314,12 @@ class node<T extends keyof HTMLElementTagNameMap> extends ele<"div"> {
   _node;
   _ele?: ele<T>;
   _root?: root<T>;
-  _watcher?: Watcher;
+  _watcher;
   dynDom?: HTMLElementTagNameMap[T];
   dom = void 0;
   constructor(render: Signal<ele<T>>) {
     super("div");
     this._node = render;
-  }
-  render(r: root<any>) {
-    const render = this._node;
-    this._ele = render.v;
     const update = () => {
       const e = render.v;
       this._ele = e;
@@ -336,11 +339,15 @@ class node<T extends keyof HTMLElementTagNameMap> extends ele<"div"> {
       this.dynDom = e.dom;
     };
     this._watcher = watcher(update);
+  }
+  render(r: root<any>) {
+    const render = this._node;
+    this._ele = render.v;
     this._watcher.watch(render);
-    update();
+    (this._watcher.callback as () => void)();
     r._addDestroyCallback(() => {
       this._root?._destroy();
-      (this._watcher as Watcher).unwatch();
+      this._watcher.unwatch();
     });
     return this.dynDom as Element;
   }

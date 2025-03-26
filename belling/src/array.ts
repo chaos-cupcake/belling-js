@@ -1,5 +1,3 @@
-import { Any } from "./index";
-
 const { max, min } = Math;
 
 function at(i: number, len: number) {
@@ -265,6 +263,6 @@ class arr<T> {
     return r;
   }
 }
-const nil = makeArr<Any>();
+const nil = makeArr<any>();
 export type array<T> = arr<T>;
 export const Stop = Symbol("Stop");

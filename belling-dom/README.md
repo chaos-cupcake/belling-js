@@ -38,7 +38,7 @@ ForIn("div", l, (i, v) => div(() => i.v + ":", v.toString()));
 ```
 
 - Performs diff updates when `l` changes, adding new elements and removing old ones.
-- Since keys or UUIDs are not required, each item in the array must be unique to enable fine-grained updates.
+- When there are duplicate items in a list, the components rendered for those identical items cannot be reused during diff updates due to the inability to determine a stable mapping relationship.
 
 ## Ele
 
@@ -91,7 +91,7 @@ ForIn("div", l, (i, v) => div(() => i.v + ":", v.toString()));
 
 当'l'改变时列表会进行diff更新，diff更新会添加新增内容，销毁被移除的内容。
 
-由于不需要提供key或uuid，数组中每一项都不能相同，以便进行细粒度更新。
+当列表中存在相同项时，由于无法确定映射关系，相同项所渲染的组件在diff更新中无法复用。
 
 ### 动态节点
 

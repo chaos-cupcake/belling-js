@@ -2,7 +2,7 @@ import { array, makeArr, Stop } from "./array";
 export { makeArr, Stop };
 export type { array };
 
-let caller: Compute<Any> | undefined;
+let caller: Compute<any> | undefined;
 function markAsDirty(n: signal) {
   const l = n._Consumer;
   for (const c of l) {
@@ -17,8 +17,8 @@ function markAsDirty(n: signal) {
     if (w instanceof Array) w.forEach((w) => w._Func?.(n));
     else w._Func?.(n);
 }
-export class State<T extends Any> {
-  _Consumer: Compute<Any>[] = [];
+export class State<T> {
+  _Consumer: Compute<any>[] = [];
   _Watchers?: Watcher | Watcher[];
   constructor(v: T) {
     this.#v = v;
@@ -40,7 +40,7 @@ export class State<T extends Any> {
   }
 }
 
-function update(c: Compute<Any>) {
+function update(c: Compute<any>) {
   if (!(c instanceof Compute) || !c._Dirty) return;
   const l = c._Producer;
   l.length = 0;
@@ -58,16 +58,8 @@ function update(c: Compute<Any>) {
 }
 
 type BasicType = number | string | boolean;
-export type Any =
-  | BasicType
-  | object
-  | undefined
-  | void
-  | null
-  | BasicType[]
-  | array<BasicType>;
-export class Compute<T extends Any> {
-  _Consumer: Compute<Any>[] = [];
+export class Compute<T> {
+  _Consumer: Compute<any>[] = [];
   _Watchers?: Watcher | Watcher[];
   _Func: () => T;
   _Dirty = true;
@@ -97,8 +89,8 @@ export class Compute<T extends Any> {
     return this._Func;
   }
 }
-export type Signal<T extends Any> = State<T> | Compute<T>;
-type signal = State<Any> | Compute<Any>;
+export type Signal<T> = State<T> | Compute<T>;
+type signal = State<any> | Compute<any>;
 function disconnect(n: signal) {
   if (!(n instanceof Compute)) return;
   const l = n._Producer;
@@ -150,11 +142,11 @@ export class Watcher {
     return this._Func;
   }
 }
-export function state<T extends Any>(v: T) {
+export function state<T>(v: T) {
   const s = new State<T>(v);
   return s;
 }
-export function compute<T extends Any>(f: () => T) {
+export function compute<T>(f: () => T) {
   return new Compute<T>(f);
 }
 export function watcher(callback: ((n: signal) => void) | undefined) {
