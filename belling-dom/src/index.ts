@@ -25,7 +25,7 @@ type Style = {
     | "parentRule"
   >]?: CSSStyleDeclaration[K];
 };
-class ele<T extends keyof HTMLElementTagNameMap> {
+class Ele<T extends keyof HTMLElementTagNameMap> {
   name: T;
   _events?:
     | {
@@ -40,13 +40,20 @@ class ele<T extends keyof HTMLElementTagNameMap> {
   dom?: HTMLElementTagNameMap[T];
   children?: children;
   constructor(name: T, children?: children) {
-    type t = ReturnType<typeof document.createElement>;
     this.name = name;
     this.children = children;
   }
   style(s: typeof this._style) {
     if (this._style) Object.assign(this._style, s);
     else this._style = s;
+    return this;
+  }
+  styles(...s: (typeof this._style)[]) {
+    let _ = this._style || {};
+    for (const S of s) {
+      Object.assign(_, S);
+    }
+    this._style = _;
     return this;
   }
   attr(attr: typeof this._attr) {
@@ -63,7 +70,7 @@ class ele<T extends keyof HTMLElementTagNameMap> {
     this._ref = callback;
     return this;
   }
-  render(r: root<any>, _el = document.createElement<T>(this.name)): Element {
+  render(r: root<any>, _el = document.createElement<T>(this.name)) {
     const el = _el;
     this.dom = el;
     if (this._events)
@@ -118,11 +125,19 @@ class ele<T extends keyof HTMLElementTagNameMap> {
           el.appendChild(t);
         } else if (typeof n == "function") {
           const t = document.createTextNode("");
-          r._watch(compute(() => (t.nodeValue = n())));
+          r._watch(
+            compute(() => {
+              t.nodeValue = n();
+            })
+          );
           el.appendChild(t);
         } else if (n instanceof State || n instanceof Compute) {
           const t = document.createTextNode("");
-          r._watch(compute(() => (t.nodeValue = n.v)));
+          r._watch(
+            compute(() => {
+              t.nodeValue = n.v;
+            })
+          );
           el.appendChild(t);
         } else {
           el.appendChild(n.render(r));
@@ -156,7 +171,7 @@ export class root<T extends keyof HTMLElementTagNameMap> {
   #watcher = new Watcher();
   #stateList: Signal<any>[] = [];
   _whenDestroy = [] as (() => void)[];
-  constructor(parentDom: Element | undefined, n: ele<T>) {
+  constructor(parentDom: Element | undefined, n: Ele<T>) {
     this.#watcher.callback = willUpdate;
     this.dom = n.render(this);
     parentDom?.appendChild(this.dom);
@@ -230,18 +245,18 @@ class ForEachNode<
   T,
   K extends keyof HTMLElementTagNameMap,
   L extends keyof HTMLElementTagNameMap
-> extends ele<K> {
+> extends Ele<K> {
   list: Signal<T[] | array<T>>;
-  f: (v: T) => ele<L>;
-  constructor(name: K, list: Signal<T[] | array<T>>, f: (v: T) => ele<L>) {
+  f: (v: T) => Ele<L>;
+  constructor(name: K, list: Signal<T[] | array<T>>, f: (v: T) => Ele<L>) {
     super(name);
     this.list = list;
     this.f = f;
   }
   #vIdx = new Map<T, number>();
   #roots = new Map<T, root<L>>();
-  render(r: root<any>): Element {
-    const el = super.render(r);
+  render(r: root<any>, _el?: HTMLElementTagNameMap[K]) {
+    const el = super.render(r, _el);
     const list = this.list,
       vi = this.#vIdx,
       mapFn = this.f,
@@ -310,14 +325,14 @@ class ForEachNode<
     return el;
   }
 }
-class node<T extends keyof HTMLElementTagNameMap> extends ele<"div"> {
+class DynNode<T extends keyof HTMLElementTagNameMap> extends Ele<"div"> {
   _node;
-  _ele?: ele<T>;
+  _ele?: Ele<T>;
   _root?: root<T>;
   _watcher;
   dynDom?: HTMLElementTagNameMap[T];
   dom = void 0;
-  constructor(render: Signal<ele<T>>) {
+  constructor(render: Signal<Ele<T>>) {
     super("div");
     this._node = render;
     const update = () => {
@@ -349,18 +364,18 @@ class node<T extends keyof HTMLElementTagNameMap> extends ele<"div"> {
       this._root?._destroy();
       this._watcher.unwatch();
     });
-    return this.dynDom as Element;
+    return this.dynDom as HTMLDivElement;
   }
 }
-type children = (ele<any> | string | Signal<string> | (() => string))[];
+type children = (Ele<any> | string | Signal<string> | (() => string))[];
 export function h(name: keyof HTMLElementTagNameMap, ...children: children) {
-  return new ele(name, children);
+  return new Ele(name, children);
 }
 export function ForEach<
   T,
   K extends keyof HTMLElementTagNameMap,
   L extends keyof HTMLElementTagNameMap
->(name: K, list: Signal<T[] | array<T>>, f: (v: T) => ele<L>) {
+>(name: K, list: Signal<T[] | array<T>>, f: (v: T) => Ele<L>) {
   const e = new ForEachNode<T, K, L>(name, list, f);
   return e;
 }
@@ -371,7 +386,7 @@ export function ForIn<
 >(
   name: K,
   list: Signal<T[] | array<T>>,
-  f: (i: State<number>, v: T) => ele<L>
+  f: (i: State<number>, v: T) => Ele<L>
 ) {
   let si = new WeakMap<T, State<number>>();
   const e = new ForEachNode<T, K, L>(
@@ -399,313 +414,339 @@ export type ForEach<
 
 /** Do not cache and reuse old nodes; when a node is removed, destroy will be executed to recycle the node! */
 export function dynNode<T extends keyof HTMLElementTagNameMap>(
-  ele: Signal<ele<T>> | (() => ele<T>)
+  ele: Signal<Ele<T>> | (() => Ele<T>)
 ) {
-  if (typeof ele == "function") return new node(compute(ele));
-  return new node(ele);
+  if (typeof ele == "function") return new DynNode(compute(ele));
+  return new DynNode(ele);
 }
-export type Ele<T extends keyof HTMLElementTagNameMap> = ele<T>;
+
+class Input extends Ele<"input" | "textarea"> {
+  value?: State<string>;
+  constructor(name: "input" | "textarea") {
+    super(name);
+  }
+  bind(value: State<string>) {
+    this.value = value;
+    return this;
+  }
+  render(r: root<any>, _el?: HTMLInputElement | HTMLTextAreaElement) {
+    const el = super.render(r, _el);
+    if (this.value) {
+      r._watch(
+        compute(() => {
+          el.value = this.value!.v;
+        })
+      );
+      el.addEventListener("input", () => {
+        this.value!.v = el.value;
+      });
+    }
+    return el;
+  }
+}
+
+export type { Ele, DynNode, Input };
 
 // html5 elements
 
 export function address(...children: children) {
-  return new ele("address", children);
+  return new Ele("address", children);
 }
 export function article(...children: children) {
-  return new ele("article", children);
+  return new Ele("article", children);
 }
 export function aside(...children: children) {
-  return new ele("aside", children);
+  return new Ele("aside", children);
 }
 export function footer(...children: children) {
-  return new ele("footer", children);
+  return new Ele("footer", children);
 }
 export function header(...children: children) {
-  return new ele("header", children);
+  return new Ele("header", children);
 }
 export function h1(...children: children) {
-  return new ele("h1", children);
+  return new Ele("h1", children);
 }
 export function h2(...children: children) {
-  return new ele("h2", children);
+  return new Ele("h2", children);
 }
 export function h3(...children: children) {
-  return new ele("h3", children);
+  return new Ele("h3", children);
 }
 export function h4(...children: children) {
-  return new ele("h4", children);
+  return new Ele("h4", children);
 }
 export function h5(...children: children) {
-  return new ele("h5", children);
+  return new Ele("h5", children);
 }
 export function h6(...children: children) {
-  return new ele("h6", children);
+  return new Ele("h6", children);
 }
 export function main(...children: children) {
-  return new ele("main", children);
+  return new Ele("main", children);
 }
 export function nav(...children: children) {
-  return new ele("nav", children);
+  return new Ele("nav", children);
 }
 export function section(...children: children) {
-  return new ele("section", children);
+  return new Ele("section", children);
 }
 export function blockquote(...children: children) {
-  return new ele("blockquote", children);
+  return new Ele("blockquote", children);
 }
 export function dd(...children: children) {
-  return new ele("dd", children);
+  return new Ele("dd", children);
 }
 export function div(...children: children) {
-  return new ele("div", children);
+  return new Ele("div", children);
 }
 export function dl(...children: children) {
-  return new ele("dl", children);
+  return new Ele("dl", children);
 }
 export function dt(...children: children) {
-  return new ele("dt", children);
+  return new Ele("dt", children);
 }
 export function figcaption(...children: children) {
-  return new ele("figcaption", children);
+  return new Ele("figcaption", children);
 }
 export function figure(...children: children) {
-  return new ele("figure", children);
+  return new Ele("figure", children);
 }
 export function hr() {
-  return new ele("hr");
+  return new Ele("hr");
 }
 export function li(...children: children) {
-  return new ele("li", children);
+  return new Ele("li", children);
 }
 export function menu(...children: children) {
-  return new ele("menu", children);
+  return new Ele("menu", children);
 }
 export function ol(...children: children) {
-  return new ele("ol", children);
+  return new Ele("ol", children);
 }
 export function p(...children: children) {
-  return new ele("p", children);
+  return new Ele("p", children);
 }
 export function pre(...children: children) {
-  return new ele("pre", children);
+  return new Ele("pre", children);
 }
 export function ul(...children: children) {
-  return new ele("ul", children);
+  return new Ele("ul", children);
 }
 export function a(...children: children) {
-  return new ele("a", children);
+  return new Ele("a", children);
 }
 export function abbr(...children: children) {
-  return new ele("abbr", children);
+  return new Ele("abbr", children);
 }
 export function b(...children: children) {
-  return new ele("b", children);
+  return new Ele("b", children);
 }
 export function bdi(...children: children) {
-  return new ele("bdi", children);
+  return new Ele("bdi", children);
 }
 export function bdo(...children: children) {
-  return new ele("bdo", children);
+  return new Ele("bdo", children);
 }
 export function br() {
-  return new ele("br");
+  return new Ele("br");
 }
 export function cite(...children: children) {
-  return new ele("cite", children);
+  return new Ele("cite", children);
 }
 export function code(...children: children) {
-  return new ele("code", children);
+  return new Ele("code", children);
 }
 export function data(...children: children) {
-  return new ele("data", children);
+  return new Ele("data", children);
 }
 export function dfn(...children: children) {
-  return new ele("dfn", children);
+  return new Ele("dfn", children);
 }
 export function em(...children: children) {
-  return new ele("em", children);
+  return new Ele("em", children);
 }
 export function i(...children: children) {
-  return new ele("i", children);
+  return new Ele("i", children);
 }
 export function kbd(...children: children) {
-  return new ele("kbd", children);
+  return new Ele("kbd", children);
 }
 export function mark(...children: children) {
-  return new ele("mark", children);
+  return new Ele("mark", children);
 }
 export function q(...children: children) {
-  return new ele("q", children);
+  return new Ele("q", children);
 }
 export function rp(...children: children) {
-  return new ele("rp", children);
+  return new Ele("rp", children);
 }
 export function rt(...children: children) {
-  return new ele("rt", children);
+  return new Ele("rt", children);
 }
 export function ruby(...children: children) {
-  return new ele("ruby", children);
+  return new Ele("ruby", children);
 }
 export function s(...children: children) {
-  return new ele("s", children);
+  return new Ele("s", children);
 }
 export function samp(...children: children) {
-  return new ele("samp", children);
+  return new Ele("samp", children);
 }
 export function small(...children: children) {
-  return new ele("small", children);
+  return new Ele("small", children);
 }
 export function span(...children: children) {
-  return new ele("span", children);
+  return new Ele("span", children);
 }
 export function strong(...children: children) {
-  return new ele("strong", children);
+  return new Ele("strong", children);
 }
 export function sub(...children: children) {
-  return new ele("sub", children);
+  return new Ele("sub", children);
 }
 export function sup(...children: children) {
-  return new ele("sup", children);
+  return new Ele("sup", children);
 }
 export function time(...children: children) {
-  return new ele("time", children);
+  return new Ele("time", children);
 }
 export function u(...children: children) {
-  return new ele("u", children);
+  return new Ele("u", children);
 }
 export function Var(...children: children) {
-  return new ele("var", children);
+  return new Ele("var", children);
 }
 export function wbr() {
-  return new ele("wbr");
+  return new Ele("wbr");
 }
 export function area() {
-  return new ele("area");
+  return new Ele("area");
 }
 export function audio(...children: children) {
-  return new ele("audio", children);
+  return new Ele("audio", children);
 }
 export function img() {
-  return new ele("img");
+  return new Ele("img");
 }
 export function map(...children: children) {
-  return new ele("map", children);
+  return new Ele("map", children);
 }
 export function track() {
-  return new ele("track");
+  return new Ele("track");
 }
 export function video(...children: children) {
-  return new ele("video", children);
+  return new Ele("video", children);
 }
 export function embed() {
-  return new ele("embed");
+  return new Ele("embed");
 }
 export function iframe(...children: children) {
-  return new ele("iframe", children);
+  return new Ele("iframe", children);
 }
 export function object(...children: children) {
-  return new ele("object", children);
+  return new Ele("object", children);
 }
 export function picture(...children: children) {
-  return new ele("picture", children);
+  return new Ele("picture", children);
 }
 s;
 export function source() {
-  return new ele("source");
+  return new Ele("source");
 }
 export function canvas(...children: children) {
-  return new ele("canvas", children);
+  return new Ele("canvas", children);
 }
 export function ins(...children: children) {
-  return new ele("ins", children);
+  return new Ele("ins", children);
 }
 export function del(...children: children) {
-  return new ele("del", children);
+  return new Ele("del", children);
 }
 export function caption(...children: children) {
-  return new ele("caption", children);
+  return new Ele("caption", children);
 }
 export function col() {
-  return new ele("col");
+  return new Ele("col");
 }
 export function colgroup(...children: children) {
-  return new ele("colgroup", children);
+  return new Ele("colgroup", children);
 }
 export function table(...children: children) {
-  return new ele("table", children);
+  return new Ele("table", children);
 }
 export function tbody(...children: children) {
-  return new ele("tbody", children);
+  return new Ele("tbody", children);
 }
 export function td(...children: children) {
-  return new ele("td", children);
+  return new Ele("td", children);
 }
 export function tfoot(...children: children) {
-  return new ele("tfoot", children);
+  return new Ele("tfoot", children);
 }
 export function th(...children: children) {
-  return new ele("th", children);
+  return new Ele("th", children);
 }
 export function thead(...children: children) {
-  return new ele("thead", children);
+  return new Ele("thead", children);
 }
 export function tr(...children: children) {
-  return new ele("tr", children);
+  return new Ele("tr", children);
 }
 export function button(...children: children) {
-  return new ele("button", children);
+  return new Ele("button", children);
 }
 export function datalist(...children: children) {
-  return new ele("datalist", children);
+  return new Ele("datalist", children);
 }
 export function fieldset(...children: children) {
-  return new ele("fieldset", children);
+  return new Ele("fieldset", children);
 }
 export function form(...children: children) {
-  return new ele("form", children);
+  return new Ele("form", children);
 }
 export function input() {
-  return new ele("input");
+  return new Input("input");
 }
 export function label(...children: children) {
-  return new ele("label", children);
+  return new Ele("label", children);
 }
 export function legend(...children: children) {
-  return new ele("legend", children);
+  return new Ele("legend", children);
 }
 export function meter(...children: children) {
-  return new ele("meter", children);
+  return new Ele("meter", children);
 }
 export function optgroup(...children: children) {
-  return new ele("optgroup", children);
+  return new Ele("optgroup", children);
 }
 export function option(...children: children) {
-  return new ele("option", children);
+  return new Ele("option", children);
 }
 export function output(...children: children) {
-  return new ele("output", children);
+  return new Ele("output", children);
 }
 export function progress(...children: children) {
-  return new ele("progress", children);
+  return new Ele("progress", children);
 }
 export function select(...children: children) {
-  return new ele("select", children);
+  return new Ele("select", children);
 }
-export function textarea(...children: children) {
-  return new ele("textarea", children);
+export function textarea() {
+  return new Input("textarea");
 }
 export function details(...children: children) {
-  return new ele("details", children);
+  return new Ele("details", children);
 }
 export function dialog(...children: children) {
-  return new ele("dialog", children);
+  return new Ele("dialog", children);
 }
 export function summary(...children: children) {
-  return new ele("summary", children);
+  return new Ele("summary", children);
 }
 export function slot(...children: children) {
-  return new ele("slot", children);
+  return new Ele("slot", children);
 }
 export function template(...children: children) {
-  return new ele("template", children);
+  return new Ele("template", children);
 }

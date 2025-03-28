@@ -57,7 +57,6 @@ function update(c: Compute<any>) {
   caller = pre;
 }
 
-type BasicType = number | string | boolean;
 export class Compute<T> {
   _Consumer: Compute<any>[] = [];
   _Watchers?: Watcher | Watcher[];
