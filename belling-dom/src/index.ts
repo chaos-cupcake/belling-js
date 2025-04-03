@@ -25,15 +25,18 @@ type Style = {
     | "parentRule"
   >]?: CSSStyleDeclaration[K];
 };
+interface ElementEventMap {
+  audio: HTMLMediaElementEventMap;
+  media: HTMLMediaElementEventMap;
+  video: HTMLVideoElementEventMap;
+}
+type EventMap<T extends keyof HTMLElementTagNameMap> =
+  T extends keyof ElementEventMap ? ElementEventMap[T] : HTMLElementEventMap;
 class Ele<T extends keyof HTMLElementTagNameMap> {
   name: T;
-  _events?:
-    | {
-        [K in keyof GlobalEventHandlersEventMap]?: (
-          e: GlobalEventHandlersEventMap[K]
-        ) => void;
-      }
-    | { unmount?: () => void };
+  _events?: {
+    [K in keyof EventMap<T>]?: (e: EventMap<T>[K]) => void;
+  } & { unmount?: () => void };
   _attr?: Kv<string | Signal<string> | (() => string)>;
   _style?: { [k in keyof Style]?: string | Signal<string> | (() => string) };
   _ref?: (dom: Element) => void;
@@ -75,8 +78,10 @@ class Ele<T extends keyof HTMLElementTagNameMap> {
     this.dom = el;
     if (this._events)
       for (const e in this._events) {
-        const f = this._events[e as keyof typeof this._events];
-        if (e === "unmount") r._addDestroyCallback(f);
+        // @ts-ignore
+        const f = this._events[e];
+        // @ts-ignore
+        if (e === "unmount") r._addDestroyCallback(this._events.unmount);
         else el.addEventListener(e, f);
       }
     if (this._attr)
@@ -420,28 +425,28 @@ export function dynNode<T extends keyof HTMLElementTagNameMap>(
   return new DynNode(ele);
 }
 
-class Input extends Ele<"input" | "textarea"> {
+class Input<T extends "input" | "textarea"> extends Ele<T> {
   value?: State<string>;
-  constructor(name: "input" | "textarea") {
+  constructor(name: T) {
     super(name);
   }
   bind(value: State<string>) {
     this.value = value;
     return this;
   }
-  render(r: root<any>, _el?: HTMLInputElement | HTMLTextAreaElement) {
-    const el = super.render(r, _el);
+  render(r: root<any>, _el = document.createElement<T>(this.name)) {
     if (this.value) {
       r._watch(
         compute(() => {
-          el.value = this.value!.v;
+          _el.value = this.value!.v;
         })
       );
-      el.addEventListener("input", () => {
-        this.value!.v = el.value;
+      _el.addEventListener("input", () => {
+        this.value!.v = _el.value;
       });
     }
-    return el;
+    super.render(r, _el);
+    return _el;
   }
 }
 
