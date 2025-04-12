@@ -6,7 +6,6 @@ let caller: Compute<any> | undefined;
 function markAsDirty(n: signal) {
   const l = n._Consumer;
   for (const c of l) {
-    if (typeof c == "number") continue;
     if (c == caller) throw new Error();
     if (c._Dirty) continue;
     c._Dirty = true;
@@ -17,8 +16,9 @@ function markAsDirty(n: signal) {
     if (w instanceof Array) w.forEach((w) => w._Func?.(n));
     else w._Func?.(n);
 }
+type C = (Compute<any> | untrackCompute<any>)[];
 export class State<T> {
-  _Consumer: Compute<any>[] = [];
+  _Consumer: C = [];
   _Watchers?: Watcher | Watcher[];
   constructor(v: T) {
     this.#v = v;
@@ -42,8 +42,6 @@ export class State<T> {
 
 function update(c: Compute<any>) {
   if (!(c instanceof Compute) || !c._Dirty) return;
-  const l = c._Producer;
-  l.length = 0;
   const pre = caller;
   caller = c;
   try {
@@ -58,7 +56,7 @@ function update(c: Compute<any>) {
 }
 
 export class Compute<T> {
-  _Consumer: Compute<any>[] = [];
+  _Consumer: C = [];
   _Watchers?: Watcher | Watcher[];
   _Func: () => T;
   _Dirty = true;
@@ -88,18 +86,61 @@ export class Compute<T> {
     return this._Func;
   }
 }
-export type Signal<T> = State<T> | Compute<T>;
-type signal = State<any> | Compute<any>;
+export class untrackCompute<T> {
+  _Consumer: C = [];
+  _Producer: signal[];
+  _Watchers?: Watcher | Watcher[];
+  _Func: () => T;
+  _Dirty = true;
+  constructor(func: () => T, producer: signal[]) {
+    this._Func = func;
+    this._Producer = producer;
+  }
+  _v?: T;
+  _Err?: Error;
+  _tracking = false;
+  get v() {
+    if (caller instanceof Compute) caller._GetCallback(this);
+    if (this._Dirty) {
+      try {
+        this._v = this._Func();
+        this._Err = void 0;
+      } catch (e) {
+        this._Err = e as Error;
+      }
+      this._Dirty = false;
+    }
+    if (this._Err) throw this._Err;
+    return this._v as T;
+  }
+  get error() {
+    return this._Err;
+  }
+  get computation() {
+    return this._Func;
+  }
+}
+export type Signal<T> = State<T> | Compute<T> | untrackCompute<T>;
+type signal = Signal<any>;
+function connect(c: untrackCompute<any>) {
+  if (c._tracking) return;
+  c._tracking = true;
+  for (const n of c._Producer) n._Consumer.push(c);
+}
 function disconnect(n: signal) {
-  if (!(n instanceof Compute)) return;
+  if (!(n instanceof Compute || n instanceof untrackCompute)) return;
   const l = n._Producer;
   for (const p of l) {
     let i = p._Consumer.indexOf(n);
     p._Consumer.splice(i, 1);
-    if (n instanceof Compute && !p._Watchers && p._Consumer.length == 0)
-      disconnect(p);
+    if (!p._Watchers && p._Consumer.length == 0) disconnect(p);
   }
-  l.length = 0;
+  n._Dirty = true;
+  if (n instanceof Compute) {
+    l.length = 0;
+  } else if (n instanceof untrackCompute) {
+    n._tracking = false;
+  }
 }
 export class Watcher {
   _Func?: (n: signal) => void;
@@ -107,12 +148,19 @@ export class Watcher {
   watch(...s: signal[]) {
     for (const n of s) {
       const w = n._Watchers;
-      if (!w) n._Watchers = this;
-      else if (w instanceof Array) {
+      if (!w) {
+        n._Watchers = this;
+      } else if (w instanceof Array) {
         if (w.indexOf(this) > -1) continue;
         w.push(this);
-      } else if (w != this) n._Watchers = [this, w];
+      } else if (w != this) {
+        n._Watchers = [this, w];
+      }
       if (n instanceof Compute) update(n);
+      if (n instanceof untrackCompute) {
+        connect(n);
+        n.v;
+      }
       this.watchList.add(n);
     }
   }
@@ -145,8 +193,9 @@ export function state<T>(v: T) {
   const s = new State<T>(v);
   return s;
 }
-export function compute<T>(f: () => T) {
-  return new Compute<T>(f);
+export function compute<T>(f: () => T, ...dependencies: C) {
+  if (dependencies.length > 0) return new untrackCompute(f, dependencies);
+  else return new Compute<T>(f);
 }
 export function watcher(callback: ((n: signal) => void) | undefined) {
   const w = new Watcher();
