@@ -2,11 +2,18 @@ import { array, makeArr, Stop } from "./array";
 export { makeArr, Stop };
 export type { array };
 
+class cycleError extends Error {
+  cycle?: signal[];
+}
 let caller: Compute<any> | undefined;
 function markAsDirty(n: signal) {
   const l = n._Consumer;
   for (const c of l) {
-    if (c == caller) throw new Error();
+    if (c == caller) {
+      const e = new cycleError("Detected cycle in computations. ");
+      e.cycle = [c, n];
+      throw e;
+    }
     if (c._Dirty) continue;
     c._Dirty = true;
     markAsDirty(c);
@@ -32,11 +39,7 @@ export class State<T> {
   set v(v) {
     if (this.#v == v) return;
     this.#v = v;
-    try {
-      markAsDirty(this);
-    } catch {
-      throw new Error("Detected cycle in computations.");
-    }
+    markAsDirty(this);
   }
 }
 
@@ -101,6 +104,7 @@ export class untrackCompute<T> {
   _tracking = false;
   get v() {
     if (caller instanceof Compute) caller._GetCallback(this);
+    connect(this);
     if (this._Dirty) {
       try {
         this._v = this._Func();
@@ -157,10 +161,8 @@ export class Watcher {
         n._Watchers = [this, w];
       }
       if (n instanceof Compute) update(n);
-      if (n instanceof untrackCompute) {
-        connect(n);
-        n.v;
-      }
+      if (n instanceof untrackCompute) n.v;
+
       this.watchList.add(n);
     }
   }
@@ -193,7 +195,7 @@ export function state<T>(v: T) {
   const s = new State<T>(v);
   return s;
 }
-export function compute<T>(f: () => T, ...dependencies: C) {
+export function compute<T>(f: () => T, ...dependencies: signal[]) {
   if (dependencies.length > 0) return new untrackCompute(f, dependencies);
   else return new Compute<T>(f);
 }

@@ -16,6 +16,7 @@ demo: [tic-tac-toe](https://codesandbox.io/p/sandbox/cjp53l)
 import { state, compute, watcher } from "belling";
 const a = state(0 as number);
 const b = compute(() => a.v + 'px');
+// comput(()=>a.v+'px', a)
 const w = watcher((s) => {
   // The callback is automatically triggered when state.v or compute.v changes.
   // The compute function won't execute immediately during callback; it only executes and caches results when compute.v is accessed.
