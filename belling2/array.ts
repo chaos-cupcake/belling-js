@@ -240,8 +240,7 @@ class arr<T> {
     f(this);
     return makeArr(...r);
   }
-  #flat(): T[] {
-    const r: T[] = [];
+  #flat(r: T[] = []): T[] {
     r.length = this.length;
     let j = 0;
     function f(p: arr<T>) {
@@ -268,6 +267,9 @@ class arr<T> {
     if (this.data) return this.data;
     this.flat();
     return this.data!;
+  }
+  copyTo(arr: T[]) {
+    this.#flat(arr);
   }
   sort(fn: ((a: T, b: T) => number) | undefined) {
     const r = this.flat();

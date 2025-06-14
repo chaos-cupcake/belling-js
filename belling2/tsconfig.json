@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2024",
+    "sourceMap": false,
+    "strict": true,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+  },
+  "files": [
+    "index.ts",
+  ]
+}

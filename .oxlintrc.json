@@ -1,5 +1,0 @@
-{
-  "rules": {
-    "oxc/approx-constant": "warn" // Show a warning when you write a number close to a known constant
-  }
-}
