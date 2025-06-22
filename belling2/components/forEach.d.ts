@@ -1,4 +1,4 @@
-import { N, baseNode, S, scrollView, view, V } from "../index";
+import { N, baseNode, S, scrollView, view, E } from "../index";
 /**
  * List elements cannot be duplicated!
  */
@@ -8,13 +8,13 @@ export declare class forEach extends baseNode<Comment> {
     constructor(nodes?: N[]);
     _whenScroll(s: scrollView): void;
 }
-export declare function ForEach<T>(list: S<T[]>, f: (item: T) => N, whenRemove?: ((item: T, node: N) => void)): forEach;
+export declare function ForEach<T>(list: S<T[]>, f: (item: T) => E, whenRemove?: ((item: T, node: N) => void)): forEach;
 export declare class list extends view {
-    nodes: V[];
-    constructor(nodes?: V[]);
+    nodes: E[];
+    constructor(nodes?: E[]);
 }
-export declare function List<T>(l: S<T[]>, f: (item: T) => N, nodes?: V[], whenRemove?: ((item: T, node: N) => void)): list;
-export declare class indexedList<T extends V> extends view {
+export declare function List<T>(l: S<T[]>, f: (item: T) => E, nodes?: E[], whenRemove?: ((item: T, node: N) => void)): list;
+export declare class indexedList<T extends E> extends view {
     nodes: T[];
     constructor(nodes?: T[]);
 }

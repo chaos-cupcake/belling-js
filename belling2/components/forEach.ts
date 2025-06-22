@@ -1,4 +1,4 @@
-import { N, baseNode, S, scrollView, view, View, V, input } from "../index";
+import { N, baseNode, S, scrollView, view, View, E, input } from "../index";
 
 function find<T>(
   arr: readonly T[],
@@ -129,23 +129,23 @@ export class forEach extends baseNode<Comment> {
     });
   }
 }
-export function ForEach<T>(list: S<T[]>, f: (item: T) => N, whenRemove?: ((item: T, node: N) => void)) {
+export function ForEach<T>(list: S<T[]>, f: (item: T) => E, whenRemove?: ((item: T, node: N) => void)) {
   let n = new forEach();
   listUpdate(list, f, n.nodes, whenRemove, n.dom);
   return n;
 }
 export class list extends view {
-  constructor(public nodes: V[] = []) {
+  constructor(public nodes: E[] = []) {
     super();
     this._scrollListener = nodes;
   }
 }
-export function List<T>(l: S<T[]>, f: (item: T) => N, nodes: V[] = [], whenRemove?: ((item: T, node: N) => void)) {
+export function List<T>(l: S<T[]>, f: (item: T) => E, nodes: E[] = [], whenRemove?: ((item: T, node: N) => void)) {
   let n = new list(nodes);
   listUpdate(l, f, nodes, whenRemove, void 0, n.dom);
   return n;
 }
-export class indexedList<T extends V> extends view {
+export class indexedList<T extends E> extends view {
   constructor(public nodes: T[] = []) {
     super();
     this._scrollListener = nodes;

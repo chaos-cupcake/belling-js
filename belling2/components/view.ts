@@ -1,8 +1,8 @@
 import { forEach, input, list, S, state, text } from "../index";
 import { ariaRole, Style } from "./utilTypes";
 
-export type N = view | scrollView | list | input | text | forEach;
-export type V = view | scrollView | list | input;
+export type N = view | scrollView | list | input | text | forEach | dynNode;
+export type E = view | scrollView | list | input | text | dynNode;
 export class baseNode<T extends Node> {
   constructor(public dom: T) { }
 }
@@ -44,7 +44,7 @@ export class baseView<T extends HTMLElement> extends baseNode<T> {
     return s.updates();
   }
 }
-class view extends baseView<HTMLDivElement> {
+export class view extends baseView<HTMLDivElement> {
   _scrollListener?: N[];
   constructor(...children: (N | string)[]) {
     super(document.createElement('div'));
@@ -52,7 +52,7 @@ class view extends baseView<HTMLDivElement> {
       if (typeof ele == 'string') {
         this.dom.appendChild(document.createTextNode(ele));
       } else {
-        if ((ele instanceof view && ele._scrollListener) || ele instanceof forEach || ele instanceof list) {
+        if ((ele instanceof view && ele._scrollListener) || ele instanceof forEach || ele instanceof list || ele instanceof dynNode) {
           if (!this._scrollListener) this._scrollListener = [ele];
           else this._scrollListener.push(ele);
         }
@@ -79,7 +79,7 @@ async function whenScroll(s: scrollView) {
     s._whenScroll(s);
   }
 }
-class scrollView extends view {
+export class scrollView extends view {
   constructor(...children: (N | string)[]) {
     super(...children);
     this.style.height = '100%';
@@ -107,4 +107,37 @@ export function View(...children: (N | string)[]) {
 export function ScrollView(...children: (N | string)[]) {
   return new scrollView(...children);
 }
-export { view, scrollView };
+
+export class dynNode {
+  dom: Node = document.createComment("");
+  l?: E;
+  constructor(n: S<E | void>) {
+    this.init(n);
+  }
+  private async init(n: S<void | E>) {
+    for await (const node of n.updates()) {
+      let c;
+      if (!node) {
+        if (this.l) {
+          c = document.createComment("");
+          this.l = void 0;
+        } else {
+          continue;
+        }
+      } else {
+        c = node.dom;
+        this.l = node;
+      }
+      this.dom.parentNode?.replaceChild(c, this.dom);
+      this.dom = c;
+    }
+  }
+  _whenScroll(s: scrollView) {
+    let n = this.l;
+    if (n && !(n instanceof input || n instanceof text))
+      n._whenScroll(s);
+  }
+}
+export function DynNode(n: S<E | void>) {
+  return new dynNode(n);
+}
